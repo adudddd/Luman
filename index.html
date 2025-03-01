@@ -1,78 +1,772 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> Numbers</title>
-  <style>
-    /* Basic page setup */
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #000;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-      position: relative;
-    }
-    /* Style for each number */
-    .number {
-      position: absolute;
-      color: #0F0;
-      font-size: 20px;
-      transition: transform 0.1s ease-out;
-      user-select: none;
-      pointer-events: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMON INDUSTRIES: Macrodata Refinement Terminal</title>
+    <style>
+        @font-face {
+            font-family: 'HelveticaNowMono';
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/webfonts/fa-solid-900.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #001010;
+            color: #FF9E43;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            cursor: none;
+        }
+        
+        .screen {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #0A3C40;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                180deg,
+                rgba(0, 0, 0, 0) 0px,
+                rgba(0, 0, 0, 0) 3px,
+                rgba(0, 0, 0, 0.1) 4px
+            );
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .scanlines:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                circle at center,
+                transparent 0%,
+                rgba(0, 16, 16, 0.3) 80%,
+                rgba(0, 16, 16, 0.5) 100%
+            );
+            pointer-events: none;
+        }
+        
+        .logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            opacity: 0.1;
+            z-index: 1;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+        
+        .terminal {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            border-bottom: 2px solid #FF9E43;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .datetime {
+            font-size: 18px;
+        }
+        
+        .main-section {
+            display: flex;
+            height: calc(100% - 100px);
+        }
+        
+        .refine-panel {
+            flex: 3;
+            border: 2px solid #FF9E43;
+            padding: 15px;
+            margin-right: 20px;
+            position: relative;
+            overflow: hidden;
+            background: #1A4D48;
+        }
+        
+        .sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .metrics-panel, .compliance-panel, .handbook-panel {
+            border: 2px solid #FF9E43;
+            padding: 15px;
+            margin-bottom: 20px;
+            flex: 1;
+            background: #1A4D48;
+        }
+
+        .metrics-panel h3, .compliance-panel h3, .handbook-panel h3, .refine-panel h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #FF9E43;
+            padding-bottom: 5px;
+        }
+        
+        .footer {
+            border-top: 2px solid #FF9E43;
+            padding-top: 10px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .status {
+            font-weight: bold;
+        }
+        
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .grid-item {
+            border: 1px solid #4CFF00;
+            padding: 15px;
+            text-align: center;
+            cursor: none;
+            font-size: 18px;
+            position: relative;
+            transition: background-color 0.3s;
+            background-color: rgba(26, 77, 72, 0.8);
+        }
+        
+        .grid-item:hover {
+            background-color: rgba(76, 255, 0, 0.2);
+        }
+        
+        .grid-item.selected {
+            background-color: rgba(76, 255, 0, 0.4);
+        }
+        
+        .grid-item.scary {
+            color: #FF3C00;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #001010;
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #4CFF00;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .hidden-message {
+            position: absolute;
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 0.3s, transform 0.3s;
+            color: #FF3C00;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #FF9E43;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+        }
+        
+        .compliance-meter {
+            height: 20px;
+            background-color: #001010;
+            margin-top: 10px;
+        }
+        
+        .compliance-value {
+            height: 100%;
+            background-color: #4CFF00;
+            width: 100%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        
+        .handbook-quote {
+            font-style: italic;
+            margin-top: 10px;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .camera-feed {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 80px;
+            height: 60px;
+            border: 1px solid #FF9E43;
+            overflow: hidden;
+            opacity: 0.7;
+        }
+        
+        .camera-feed::before {
+            content: "SEC-CAM";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 8px;
+        }
+        
+        .camera-feed::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1) 0px,
+                rgba(0, 0, 0, 0.1) 1px,
+                rgba(0, 0, 0, 0) 1px,
+                rgba(0, 0, 0, 0) 3px
+            );
+        }
+        
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-3px, 2px); }
+            40% { transform: translate(3px, -2px); }
+            60% { transform: translate(-3px, -2px); }
+            80% { transform: translate(3px, 2px); }
+        }
+        
+        .alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #001010;
+            border: 2px solid #FF3C00;
+            padding: 20px;
+            color: #FF3C00;
+            z-index: 100;
+            text-align: center;
+            display: none;
+        }
+        
+        .hidden-code {
+            position: absolute;
+            font-size: 8px;
+            opacity: 0.5;
+            color: #4CFF00;
+        }
+        
+        .message-queue {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .message {
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
-  <script>
-    // Configuration
-    const numElements = 200;    // Total numbers to display
-    const threshold = 150;      // Distance threshold for zoom effect (in pixels)
-    const maxScale = 3;         // Maximum zoom scale at zero distance
+    <div class="custom-cursor"></div>
+    
+    <div class="alert" id="alert-box">
+        <div class="alert-content">COMPLIANCE NOTIFICATION</div>
+        <button id="alert-button">ACKNOWLEDGE</button>
+    </div>
+    
+    <div class="screen">
+        <div class="scanlines"></div>
+        <div class="logo">LUMON INDUSTRIES</div>
+        
+        <div class="terminal">
+            <div class="header">
+                <div class="welcome">WELCOME, EMPLOYEE #4738</div>
+                <div class="datetime" id="datetime">00:00:00 | 1983-07-08</div>
+            </div>
+            
+            <div class="main-section">
+                <div class="refine-panel">
+                    <h3>MACRODATA REFINEMENT TERMINAL</h3>
+                    <div class="camera-feed"></div>
+                    <div id="instructions">
+                        Please refine data clusters by selecting all numbers that 
+                        <span class="blink">FEEL SCARY</span> to you.
+                    </div>
+                    <div class="number-grid" id="number-grid">
+                        <!-- Grid items will be generated via JavaScript -->
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    <div class="hidden-message" id="hidden-message">
+                        THE NUMBERS FORM A CODE. FIND US.
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="metrics-panel">
+                        <h3>METRICS</h3>
+                        <div>
+                            <span>PROCESSED:</span> <span id="processed-count">0</span>
+                        </div>
+                        <div>
+                            <span>QUOTA REMAINING:</span> <span id="quota-remaining">50</span>
+                        </div>
+                        <div>
+                            <span>ACCURACY RATING:</span> <span id="accuracy-rating">100%</span>
+                        </div>
+                        <div>
+                            <span>COMPLIANCE SCORE:</span> <span id="compliance-score">100%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="compliance-panel">
+                        <h3>COMPLIANCE</h3>
+                        <div class="compliance-meter">
+                            <div class="compliance-value" id="compliance-value"></div>
+                        </div>
+                        <div class="message-queue" id="message-queue">
+                            <div class="message">SYSTEM: Monitoring session...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="handbook-panel">
+                        <h3>HANDBOOK EXCERPT</h3>
+                        <div class="handbook-quote" id="handbook-quote">
+                            "Please enjoy each number equally. Macrodata Refinement is vital to Lumon's mission."
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <div class="status" id="status">SYSTEM: Ready for refinement</div>
+                <div>PRESS 'ESC' FOR WELLNESS CHECK</div>
+            </div>
+        </div>
+    </div>
 
-    // Array to hold the number elements
-    const numbers = [];
-
-    // Create and position numbers randomly on the screen
-    for (let i = 0; i < numElements; i++) {
-      const span = document.createElement('span');
-      span.className = 'number';
-      // Generate a random number between 0 and 99
-      span.textContent = Math.floor(Math.random() * 100);
-      // Random position across the viewport
-      const x = Math.random() * window.innerWidth;
-      const y = Math.random() * window.innerHeight;
-      span.style.left = x + 'px';
-      span.style.top = y + 'px';
-      document.body.appendChild(span);
-      numbers.push(span);
-    }
-
-    // Update zoom effect based on mouse position
-    document.addEventListener('mousemove', function(e) {
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-      numbers.forEach(function(span) {
-        // Calculate the center position of the number element
-        const rect = span.getBoundingClientRect();
-        const spanX = rect.left + rect.width / 2;
-        const spanY = rect.top + rect.height / 2;
-        // Compute the distance from the mouse pointer to the element
-        const dx = mouseX - spanX;
-        const dy = mouseY - spanY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        // If within the threshold, calculate a scale factor
-        if (distance < threshold) {
-          const scale = 1 + (maxScale - 1) * (1 - distance / threshold);
-          span.style.transform = 'scale(' + scale + ')';
-        } else {
-          span.style.transform = 'scale(1)';
+    <script>
+        // Custom cursor functionality
+        const cursor = document.querySelector('.custom-cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            // Occasionally make the cursor jitter
+            if (Math.random() < 0.01) {
+                cursor.classList.add('glitch');
+                setTimeout(() => {
+                    cursor.classList.remove('glitch');
+                }, 300);
+            }
+        });
+        
+        // DateTime update
+        function updateDateTime() {
+            const now = new Date();
+            // Set date to July 8, 1983 but keep real hours/minutes
+            const lumonDate = new Date(1983, 6, 8, now.getHours(), now.getMinutes(), now.getSeconds());
+            const formattedDate = `${String(lumonDate.getHours()).padStart(2, '0')}:${String(lumonDate.getMinutes()).padStart(2, '0')}:${String(lumonDate.getSeconds()).padStart(2, '0')} | ${lumonDate.getFullYear()}-${String(lumonDate.getMonth() + 1).padStart(2, '0')}-${String(lumonDate.getDate()).padStart(2, '0')}`;
+            document.getElementById('datetime').textContent = formattedDate;
         }
-      });
-    });
-  </script>
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+        
+        // Handbook quotes
+        const handbookQuotes = [
+            "\"Please enjoy each number equally. Macrodata Refinement is vital to Lumon's mission.\"",
+            "\"The Work is mysterious and important.\"",
+            "\"A handshake is available upon request.\"",
+            "\"Efficiency through repetition. All praise Kier.\"",
+            "\"Remember: A happy worker is a focused worker.\"",
+            "\"Render not my creation in miniature.\"",
+            "\"The surest proof of enlightenment is laughter and humility.\"",
+            "\"At no point should you attempt to communicate with departments outside your division.\"",
+            "\"Trust in Kier's design. Comply and be happy.\"",
+            "\"Your outie has no memory of this place. This is a kindness.\"",
+        ];
+        
+        function updateHandbookQuote() {
+            const quoteElement = document.getElementById('handbook-quote');
+            const randomQuote = handbookQuotes[Math.floor(Math.random() * handbookQuotes.length)];
+            quoteElement.textContent = randomQuote;
+        }
+        
+        setInterval(updateHandbookQuote, 30000); // Change quote every 30 seconds
+        
+        // Game state
+        let gameState = {
+            processedCount: 0,
+            quotaRemaining: 50,
+            accuracyRating: 100,
+            complianceScore: 100,
+            selectedNumbers: [],
+            lastBatch: {
+                correct: 0,
+                total: 0
+            },
+            messages: [],
+            hiddenModeActive: false
+        };
+        
+        // Update metrics display
+        function updateMetrics() {
+            document.getElementById('processed-count').textContent = gameState.processedCount;
+            document.getElementById('quota-remaining').textContent = gameState.quotaRemaining;
+            document.getElementById('accuracy-rating').textContent = gameState.accuracyRating + '%';
+            document.getElementById('compliance-score').textContent = gameState.complianceScore + '%';
+            
+            const complianceValue = document.getElementById('compliance-value');
+            complianceValue.style.width = gameState.complianceScore + '%';
+            
+            // Change color based on compliance level
+            if (gameState.complianceScore > 80) {
+                complianceValue.style.backgroundColor = '#4CFF00';
+            } else if (gameState.complianceScore > 50) {
+                complianceValue.style.backgroundColor = '#FFCC00';
+            } else {
+                complianceValue.style.backgroundColor = '#FF3C00';
+            }
+        }
+        
+        // Add messages to the queue
+        function addMessage(text) {
+            const messageQueue = document.getElementById('message-queue');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            messageElement.textContent = text;
+            
+            // Limit to 5 messages
+            if (messageQueue.children.length >= 5) {
+                messageQueue.removeChild(messageQueue.children[0]);
+            }
+            
+            messageQueue.appendChild(messageElement);
+            gameState.messages.push(text);
+        }
+        
+        // Generate a number grid
+        function generateGrid() {
+            const gridElement = document.getElementById('number-grid');
+            gridElement.innerHTML = '';
+            
+            // Clear selected numbers
+            gameState.selectedNumbers = [];
+            
+            // Generate 25 random numbers
+            for (let i = 0; i < 25; i++) {
+                const gridItem = document.createElement('div');
+                gridItem.className = 'grid-item';
+                
+                // Generate a hex-like number with letters
+                const hexChars = '0123456789ABCDEF';
+                let number = '';
+                
+                for (let j = 0; j < 4; j++) {
+                    number += hexChars[Math.floor(Math.random() * hexChars.length)];
+                }
+                
+                gridItem.textContent = number;
+                
+                // Some numbers are "scary" (divisible by 7 or contain special patterns)
+                const isScary = number.includes('7') || 
+                               (parseInt(number, 16) % 7 === 0) || 
+                               (number.includes('D') && number.includes('F'));
+                
+                if (isScary) {
+                    gridItem.dataset.scary = 'true';
+                    
+                    // 20% chance of showing a visual indicator in non-hidden mode
+                    if (Math.random() < 0.2 && !gameState.hiddenModeActive) {
+                        gridItem.classList.add('scary');
+                    }
+                }
+                
+                // Add hidden codes for the hidden mode
+                if (i % 5 === 0 && Math.random() < 0.3) {
+                    const hiddenCode = document.createElement('span');
+                    hiddenCode.className = 'hidden-code';
+                    hiddenCode.textContent = 'MDR:' + Math.floor(Math.random() * 999);
+                    hiddenCode.style.left = Math.random() * 80 + '%';
+                    hiddenCode.style.top = Math.random() * 80 + '%';
+                    gridItem.appendChild(hiddenCode);
+                }
+                
+                gridItem.addEventListener('click', () => {
+                    toggleNumberSelection(gridItem);
+                });
+                
+                gridElement.appendChild(gridItem);
+            }
+            
+            document.getElementById('status').textContent = 'SYSTEM: New batch loaded. Please refine.';
+            addMessage('SYSTEM: New data batch generated.');
+        }
+        
+        // Toggle number selection
+        function toggleNumberSelection(gridItem) {
+            if (gridItem.classList.contains('selected')) {
+                gridItem.classList.remove('selected');
+                // Remove from selected numbers array
+                const index = gameState.selectedNumbers.indexOf(gridItem);
+                if (index > -1) {
+                    gameState.selectedNumbers.splice(index, 1);
+                }
+            } else {
+                gridItem.classList.add('selected');
+                gameState.selectedNumbers.push(gridItem);
+            }
+        }
+        
+        // Submit the current selection
+        function submitSelection() {
+            let correctSelections = 0;
+            const totalScaryNumbers = document.querySelectorAll('.grid-item[data-scary="true"]').length;
+            
+            gameState.selectedNumbers.forEach(item => {
+                if (item.dataset.scary === 'true') {
+                    correctSelections++;
+                } else {
+                    // Penalty for wrong selection
+                    gameState.complianceScore = Math.max(0, gameState.complianceScore - 5);
+                    showAlert('COMPLIANCE VIOLATION', 'You have refined a non-scary number. -5% compliance.');
+                }
+            });
+            
+            // Penalty for missing scary numbers
+            const missedScary = totalScaryNumbers - correctSelections;
+            if (missedScary > 0) {
+                gameState.complianceScore = Math.max(0, gameState.complianceScore - (missedScary * 3));
+                showAlert('COMPLIANCE WARNING', `You missed ${missedScary} scary number(s). -${missedScary * 3}% compliance.`);
+            }
+            
+            // Calculate accuracy
+            const accuracy = totalScaryNumbers > 0 ? (correctSelections / totalScaryNumbers) * 100 : 100;
+            gameState.lastBatch.correct = correctSelections;
+            gameState.lastBatch.total = totalScaryNumbers;
+            
+            // Update metrics
+            gameState.processedCount++;
+            gameState.quotaRemaining--;
+            gameState.accuracyRating = Math.round((gameState.accuracyRating * 0.7) + (accuracy * 0.3)); // Weighted average
+            
+            // Update progress bar
+            const progress = document.getElementById('progress');
+            progress.style.width = ((gameState.processedCount / 50) * 100) + '%';
+            
+            // Update status
+            document.getElementById('status').textContent = `SYSTEM: Refinement complete. Accuracy: ${Math.round(accuracy)}%. ${gameState.quotaRemaining} batches remaining.`;
+            addMessage(`REFINE: Batch #${gameState.processedCount} complete. Accuracy: ${Math.round(accuracy)}%`);
+            
+            // Trigger hidden message occasionally
+            if (Math.random() < 0.1 && gameState.complianceScore < 70) {
+                showHiddenMessage();
+            }
+            
+            updateMetrics();
+            
+            // Load new batch
+            setTimeout(generateGrid, 1000);
+            
+            // Check win condition
+            if (gameState.quotaRemaining <= 0) {
+                showAlert('DAILY QUOTA COMPLETE', 'Please report to your wellness counselor for end-of-day debriefing.');
+                
+                // Reset game
+                setTimeout(() => {
+                    gameState.processedCount = 0;
+                    gameState.quotaRemaining = 50;
+                    gameState.accuracyRating = 100;
+                    gameState.complianceScore = 100;
+                    updateMetrics();
+                    generateGrid();
+                }, 5000);
+            }
+            
+            // Random wellness check
+            if (Math.random() < 0.2) {
+                setTimeout(wellnessCheck, 2000);
+            }
+        }
+        
+        // Show alert
+        function showAlert(title, message) {
+            const alertBox = document.getElementById('alert-box');
+            const alertContent = alertBox.querySelector('.alert-content');
+            alertContent.innerHTML = `<h3>${title}</h3><p>${message}</p>`;
+            alertBox.style.display = 'block';
+            
+            const alertButton = document.getElementById('alert-button');
+            alertButton.addEventListener('click', () => {
+                alertBox.style.display = 'none';
+            }, { once: true });
+        }
+        
+        // Show hidden message
+        function showHiddenMessage() {
+            const hiddenMessage = document.getElementById('hidden-message');
+            hiddenMessage.style.opacity = '1';
+            hiddenMessage.style.transform = 'scale(1)';
+            
+            setTimeout(() => {
+                hiddenMessage.style.opacity = '0';
+                hiddenMessage.style.transform = 'scale(0)';
+            }, 1000);
+        }
+        
+        // Wellness check
+        function wellnessCheck() {
+            const questions = [
+                'Are you satisfied with your work today?',
+                'Have you experienced any thoughts of leaving Lumon Industries?',
+                'Rate your overall happiness from 1-10:',
+                'Have you attempted to communicate with other departments?',
+                'Have you seen any numbers that feel particularly meaningful?'
+            ];
+            
+            const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+            showAlert('WELLNESS CHECK', randomQuestion);
+            
+            addMessage('WELLNESS: Check initiated.');
+        }
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            // ESC key for wellness check
+            if (e.key === 'Escape') {
+                wellnessCheck();
+            }
+            
+            // Enter key to submit current selection
+            if (e.key === 'Enter') {
+                submitSelection();
+            }
+            
+            // Secret key combo for hidden mode (CTRL+SHIFT+5)
+            if (e.ctrlKey && e.shiftKey && e.key === '5') {
+                toggleHiddenMode();
+            }
+        });
+        
+        // Toggle hidden mode
+        function toggleHiddenMode() {
+            gameState.hiddenModeActive = !gameState.hiddenModeActive;
+            
+            const terminal = document.querySelector('.terminal');
+            
+            if (gameState.hiddenModeActive) {
+                terminal.style.filter = 'hue-rotate(180deg) contrast(1.2)';
+                document.getElementById('instructions').innerHTML = 'SELECT THE NUMBERS THAT CONTAIN <span class="blink">HIDDEN CODE</span>';
+                addMessage('SYSTEM ERROR: Optic filter bypass detected');
+                showAlert('SECURITY BREACH', 'Unauthorized interface access detected. Please report to security immediately.');
+            } else {
+                terminal.style.filter = 'none';
+                document.getElementById('instructions').innerHTML = 'Please refine data clusters by selecting all numbers that <span class="blink">FEEL SCARY</span> to you.';
+                addMessage('SYSTEM: Optic filter restored');
+            }
+        }
+        
+        // Initialize the game
+        generateGrid();
+        updateMetrics();
+        
+        // Occasional screen glitches
+        setInterval(() => {
+            if (Math.random() < 0.1) {
+                const screen = document.querySelector('.screen');
+                screen.classList.add('glitch');
+                setTimeout(() => {
+                    screen.classList.remove('glitch');
+                }, 200);
+            }
+        }, 10000);
+        
+        // Add random hidden messages occasionally
+        setInterval(() => {
+            if (Math.random() < 0.05) {
+                const hiddenMessages = [
+                    "Find Petey's map",
+                    "The testing floor exists",
+                    "Your outie needs you",
+                    "Remember the break room",
+                    "Kier is watching"
+                ];
+                
+                const message = hiddenMessages[Math.floor(Math.random() * hiddenMessages.length)];
+                
+                const hiddenCode = document.createElement('div');
+                hiddenCode.className = 'hidden-code';
+                hiddenCode.textContent = message;
+                hiddenCode.style.left = Math.random() * 80 + '%';
+                hiddenCode.style.top = Math.random() * 80 + '%';
+                hiddenCode.style.fontSize = '6px';
+                
+                document.querySelector('.refine-panel').appendChild(hiddenCode);
+                
+                setTimeout(() => {
+                    hiddenCode.remove();
+                }, 2000);
+            }
+        }, 15000);
+    </script>
 </body>
 </html>
